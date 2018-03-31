@@ -8,6 +8,8 @@ test-python:
   script:
     - pip3 install -r requirements.txt
     - ./hollow.py -h
+  tags:
+    - runner:k8s
 
 package-docker:
   stage: package
@@ -17,3 +19,5 @@ package-docker:
   script:
     - docker build -t ssube/hollow-yaml .
     - echo docker push ssube/hollow-yaml
+  tags:
+    - runner:k8s
