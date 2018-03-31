@@ -1,29 +1,54 @@
 stages:
+  - build
   - test
   - package
 
-test-python:
-  stage: test
+.python: &python-job
   image: python:3.6
-  script:
-    - pip3 install -r requirements.txt
-    - ./hollow.py -h
   tags:
     - runner:k8s
 
-package-docker:
+  before_script:
+    - pip3 install -r requirements.txt
+
+build:python:
+  <<: *python-job
+  stage: build
+
+  script:
+    - python -OO -m py_compile hollow.py
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - src
+
+test:python:
+  <<: *python-job
+  stage: test
+
+  dependencies:
+    - build:python
+  script:
+    - ./hollow.py -h
+
+package:docker:
   stage: package
   image: docker:stable
   services:
     - docker:stable-dind
+  tags:
+    - runner:k8s
+
+  dependencies:
+    - build:python
   before_script:
     - mkdir /root/.docker
     - ln -s /secrets/docker /root/.docker/config.json
     - docker info
   script:
-    - docker build -t ssube/hollow-yaml .
-    - docker push ssube/hollow-yaml
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
   variables:
+    DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://localhost:2375
-  tags:
-    - runner:k8s
+    IMAGE_TAG: ssube/hollow-yaml:$CI_COMMIT_REF_SLUG
