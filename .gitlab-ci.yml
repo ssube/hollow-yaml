@@ -19,5 +19,7 @@ package-docker:
   script:
     - docker build -t ssube/hollow-yaml .
     - echo docker push ssube/hollow-yaml
+  variables:
+    DOCKER_HOST: tcp://localhost:2375
   tags:
     - runner:k8s
