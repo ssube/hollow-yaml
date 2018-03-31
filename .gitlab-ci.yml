@@ -1,0 +1,19 @@
+stages:
+  - test
+  - package
+
+test-python:
+  stage: test
+  image: python:3.6
+  script:
+    - pip3 install -r requirements.txt
+    - ./hollow.py -h
+
+package-docker:
+  stage: package
+  image: docker:stable
+  services:
+    - docker:stable-dind
+  script:
+    - docker build -t ssube/hollow-yaml .
+    - echo docker push ssube/hollow-yaml
