@@ -16,9 +16,13 @@ package-docker:
   image: docker:stable
   services:
     - docker:stable-dind
+  before_script:
+    - mkdir /root/.docker
+    - ln -s /secrets/docker /root/.docker/config.json
+    - docker info
   script:
     - docker build -t ssube/hollow-yaml .
-    - echo docker push ssube/hollow-yaml
+    - docker push ssube/hollow-yaml
   variables:
     DOCKER_HOST: tcp://localhost:2375
   tags:
