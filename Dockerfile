@@ -2,7 +2,8 @@ FROM python:3.6
 
 COPY . /app
 
-RUN pip3 install -r requirements.txt \
- && python -OO -m py_compile hollow.py
+WORKDIR /app
 
-CMD [ "/app/hollow.py" ]
+RUN pip3 install -r requirements.txt
+
+ENTRYPOINT [ "/app/hollow.py" ]
