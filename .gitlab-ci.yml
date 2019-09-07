@@ -1,54 +1,72 @@
 stages:
   - build
-  - test
   - package
 
-.python: &python-job
+.build-docker: &build-docker
+  image: docker:18.09.8
+  services:
+    - docker:18.09.8-dind
+  tags:
+    - platform:k8s
+    - runner:shared
+  allow_failure: false
+
+  before_script:
+    # prep secrets
+    - mkdir ${HOME}/.docker
+    - echo "${DOCKER_SECRET}" | base64 -d > ${HOME}/.docker/config.json
+    - docker info
+  script:
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  after_script:
+    - rm -rfv ${HOME}/.docker
+
+  variables: &vars-docker
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://localhost:2375
+
+.build-python: &build-python
   image: python:3.6
   tags:
-    - runner:k8s
+    - platform:k8s
+    - runner:shared
 
   before_script:
     - pip3 install -r requirements.txt
 
-build:python:
-  <<: *python-job
+build-python:
+  <<: *build-python
   stage: build
 
   script:
     - python -OO -m py_compile hollow.py
+    - ./hollow.py -h
   artifacts:
     expire_in: 1 hour
     paths:
       - src
 
-test:python:
-  <<: *python-job
-  stage: test
+build-image-branch:
+  <<: [*build-docker]
+  stage: image
+  except:
+    - tags
 
   dependencies:
-    - build:python
-  script:
-    - ./hollow.py -h
-
-package:docker:
-  stage: package
-  image: docker:stable
-  services:
-    - docker:stable-dind
-  tags:
-    - runner:k8s
-
-  dependencies:
-    - build:python
-  before_script:
-    - mkdir /root/.docker
-    - ln -s /secrets/docker /root/.docker/config.json
-  script:
-    - docker info
-    - docker build -t $IMAGE_TAG .
-    - docker push $IMAGE_TAG
+    - build-python
   variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_HOST: tcp://localhost:2375
-    IMAGE_TAG: ssube/hollow-yaml:$CI_COMMIT_REF_SLUG
+    <<: [*vars-docker]
+    IMAGE_TAG: "ssube/salty-dog:${CI_COMMIT_REF_SLUG}"
+
+build-image-tag:
+  <<: [*build-docker]
+  stage: image
+  only:
+    - tags
+
+  dependencies:
+    - build-python
+  variables:
+    <<: [*vars-docker]
+    IMAGE_TAG: "ssube/salty-dog:${CI_COMMIT_TAG}"
