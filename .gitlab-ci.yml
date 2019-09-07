@@ -1,6 +1,6 @@
 stages:
   - build
-  - package
+  - image
 
 .build-docker: &build-docker
   image: docker:18.09.8
