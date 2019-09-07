@@ -57,7 +57,7 @@ build-image-branch:
     - build-python
   variables:
     <<: [*vars-docker]
-    IMAGE_TAG: "ssube/salty-dog:${CI_COMMIT_REF_SLUG}"
+    IMAGE_TAG: "ssube/hollow-yaml:${CI_COMMIT_REF_SLUG}"
 
 build-image-tag:
   <<: [*build-docker]
@@ -69,4 +69,4 @@ build-image-tag:
     - build-python
   variables:
     <<: [*vars-docker]
-    IMAGE_TAG: "ssube/salty-dog:${CI_COMMIT_TAG}"
+    IMAGE_TAG: "ssube/hollow-yaml:${CI_COMMIT_TAG}"
