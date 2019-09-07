@@ -40,8 +40,8 @@ build-python:
   stage: build
 
   script:
-    - python -OO -m py_compile hollow.py
-    - ./hollow.py -h
+    - python -OO -m py_compile ./src/hollow.py
+    - ./src/hollow.py -h
   artifacts:
     expire_in: 1 hour
     paths:
